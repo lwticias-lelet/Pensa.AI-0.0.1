@@ -1,4 +1,0 @@
-gradio
-llama-index
-python-dotenv
-httpx

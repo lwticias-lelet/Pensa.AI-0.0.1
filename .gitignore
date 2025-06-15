@@ -38,6 +38,7 @@ dist/
 build/
 
 requirements.txt
+
 # Ambiente virtual (substitua pelo nome do seu venv)
 venv/
 env/

@@ -2,16 +2,16 @@ import os
 from dotenv import load_dotenv
 import gradio as gr
 
-from llama_index import (
+from llama_index.core import (
     VectorStoreIndex,
     SimpleDirectoryReader,
     StorageContext,
     load_index_from_storage,
-    LangchainEmbedding
+    ServiceContext
 )
+from llama_index.embeddings.langchain import LangchainEmbedding
 from langchain.embeddings import HuggingFaceInstructEmbeddings
 from llama_index.llms.openai import OpenAI
-from llama_index.core import ServiceContext
 
 load_dotenv()
 
@@ -29,10 +29,10 @@ embed_model = LangchainEmbedding(
 if not os.path.exists("index"):
     documents = SimpleDirectoryReader("data").load_data()
     index = VectorStoreIndex.from_documents(documents, embed_model=embed_model)
-    index.storage_context.persist("index")
+    index.storage_context.persist(persist_dir="index")
 else:
     storage_context = StorageContext.from_defaults(persist_dir="index")
-    index = load_index_from_storage(storage_context)
+    index = load_index_from_storage(storage_context, embed_model=embed_model)
 
 # Configura o LLM OpenRouter
 llm = OpenAI(api_key=API_KEY, model=MODEL, base_url=BASE_URL)
