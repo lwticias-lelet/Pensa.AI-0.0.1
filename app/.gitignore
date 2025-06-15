@@ -1,0 +1,39 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Arquivos de configuração de ambiente
+.env
+
+# Pasta de cache de indexação (do llama_index)
+index/
+
+# Arquivos de log
+*.log
+
+# Arquivos temporários do sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDEs (exemplo VS Code)
+.vscode/
+
+# Pip cache
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Arquivos bytecode compilados
+*.pyc
+
+# Diretórios ocultos que o Git não precisa
+*.egg-info/
+dist/
+build/
+
