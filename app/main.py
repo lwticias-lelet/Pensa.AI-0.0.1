@@ -1,32 +1,43 @@
 import os
+import shutil
 from dotenv import load_dotenv
 import gradio as gr
+from llama_index.core.indices import VectorStoreIndex
+from llama_index.core.storage import StorageContext
+from llama_index.core.readers import SimpleDirectoryReader
 from llama_index.core import ServiceContext
-from llama_index.llms.openai import OpenAI
-from llama_index.embeddings.langchain import LangchainEmbedding
-from langchain_huggingface import HuggingFaceEmbeddings
+
+from llama_index.indices.vector_store import VectorStoreIndex
+from langchain.chat_models import ChatOpenAI
+from langchain.embeddings import HuggingFaceEmbeddings
+
 from app.llama_index_helper import get_index
 from app.pdf_loader import load_pdfs_from_folder
-import shutil
 
 load_dotenv()
 
-# API OpenRouter
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 MODEL = "mistralai/mistral-7b-instruct:free"
 BASE_URL = "https://openrouter.ai/api/v1"
 
-# Embeddings
-embed_model = LangchainEmbedding(
-    HuggingFaceEmbeddings(model_name="hkunlp/instructor-base")
+# Configura embeddings HuggingFace (via LangChain)
+embed_model = HuggingFaceEmbeddings(model_name="hkunlp/instructor-base")
+
+# Configura LLM via LangChain, usando OpenRouter com o modelo escolhido
+llm = ChatOpenAI(
+    openai_api_key=API_KEY,
+    model_name=MODEL,
+    base_url=BASE_URL,
+    streaming=False,
 )
 
-# LLM + ServiceContext
-llm = OpenAI(api_key=API_KEY, model=MODEL, base_url=BASE_URL)
-service_context = ServiceContext.from_defaults(llm=llm)
+# Cria o ServiceContext com llm e embedding (compatível com sua versão)
+service_context = ServiceContext.from_defaults(llm=llm, embed_model=embed_model)
 
-# Index
-index = get_index(embed_model)
+# Cria ou carrega o índice usando seu helper (ajuste seu helper para usar VectorStoreIndex)
+index = get_index(service_context=service_context)
+
+# Cria o chat engine com prompt customizado e serviço configurado
 chat_engine = index.as_chat_engine(
     chat_mode="condense_question",
     service_context=service_context,
@@ -49,7 +60,6 @@ def handle_upload(files):
         dest = os.path.join(upload_dir, os.path.basename(file.name))
         shutil.copy(file.name, dest)
 
-    # Reindexar com novos documentos PDF
     new_docs = load_pdfs_from_folder(upload_dir)
     if new_docs:
         index.insert_documents(new_docs)
