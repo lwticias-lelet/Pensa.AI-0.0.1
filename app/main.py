@@ -7,12 +7,13 @@ from llama_index.core.storage import StorageContext
 from llama_index.core.readers import SimpleDirectoryReader
 from llama_index.core import ServiceContext
 
-from llama_index.indices.vector_store import VectorStoreIndex
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
 from langchain.embeddings import HuggingFaceEmbeddings
 
-from app.llama_index_helper import get_index
-from app.pdf_loader import load_pdfs_from_folder
+from llama_index_helper import get_index
+from .pdf_loader import load_pdfs_from_folder
 
 load_dotenv()
 

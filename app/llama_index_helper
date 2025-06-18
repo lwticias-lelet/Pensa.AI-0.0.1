@@ -1,7 +1,5 @@
 import os
-from llama_index import VectorStoreIndex, StorageContext, SimpleDirectoryReader
-
-
+from llama_index.core import VectorStoreIndex, StorageContext, SimpleDirectoryReader, ServiceContext
 
 def get_index(service_context):
     persist_dir = "index"
