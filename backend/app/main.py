@@ -1,7 +1,9 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from llama_index_helper import get_response_from_query, update_index
+
+from .llama_index_helper import get_response_from_query, update_index
+
 from .pdf_loader import save_upload_file
 from .config import CORS_ORIGINS
 import uvicorn
