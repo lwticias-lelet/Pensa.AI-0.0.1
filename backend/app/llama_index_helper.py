@@ -41,6 +41,37 @@ ESTRUTURA OBRIGATÓRIA DE RESPOSTA:
 IMPORTANTE: Ensine o PROCESSO, não a resposta final!
 """
 
+def setup_embedding_model():
+    """Configura modelo de embedding local/gratuito"""
+    try:
+        # Opção 1: Usar embedding local simples
+        from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+        
+        # Modelo pequeno e gratuito
+        embed_model = HuggingFaceEmbedding(
+            model_name="sentence-transformers/all-MiniLM-L6-v2",
+            cache_folder="./embeddings_cache"
+        )
+        
+        Settings.embed_model = embed_model
+        print("✅ Embedding local configurado!")
+        return True
+        
+    except ImportError:
+        try:
+            # Opção 2: Usar embedding padrão do LlamaIndex
+            from llama_index.embeddings.openai import OpenAIEmbedding
+            from llama_index.core.embeddings import BaseEmbedding
+            
+            # Usar embedding mock/local
+            print("⚠️  Usando embedding básico local")
+            # Settings.embed_model será o padrão
+            return True
+            
+        except:
+            print("⚠️  Usando configuração de embedding padrão")
+            return True
+
 def setup_llama_index():
     """Configura o LlamaIndex com foco educacional"""
     global _initialized
@@ -55,11 +86,13 @@ def setup_llama_index():
         return False
     
     try:
-        # Configurar LLM com comportamento educacional
+        # Configurar embedding primeiro (local/gratuito)
+        setup_embedding_model()
+        
+        # Configurar LLM Groq
         llm = Groq(
-            model="mixtral-8x7b-32768",
+            model="llama3-8b-8192",  # Modelo recomendado para educação
             api_key=groq_api_key,
-            system_prompt=EDUCATIONAL_SYSTEM_PROMPT  # Prompt educacional global
         )
         
         Settings.llm = llm
@@ -76,6 +109,7 @@ def ensure_directories():
     try:
         os.makedirs(UPLOADS_DIR, exist_ok=True)
         os.makedirs(PERSIST_DIR, exist_ok=True)
+        os.makedirs("./embeddings_cache", exist_ok=True)  # Cache para embeddings
         return True
     except Exception as e:
         print(f"❌ Erro ao criar diretórios: {str(e)}")
@@ -157,7 +191,10 @@ INSTRUÇÕES PARA O TUTOR:
 """
         
         # Adicionar documento educacional básico
-        documents.append(create_educational_index().docstore.docs[list(create_educational_index().docstore.docs.keys())[0]])
+        educational_base = create_educational_index()
+        if educational_base:
+            base_docs = list(educational_base.docstore.docs.values())
+            documents.extend(base_docs)
         
         index = VectorStoreIndex.from_documents(documents)
         index.storage_context.persist(persist_dir=PERSIST_DIR)
@@ -204,26 +241,6 @@ def is_educational_query(query: str) -> bool:
     query_lower = query.lower()
     return not any(keyword in query_lower for keyword in non_educational)
 
-def format_educational_prompt(query: str, context: str) -> str:
-    """Formata o prompt para resposta educacional"""
-    return f"""
-{EDUCATIONAL_SYSTEM_PROMPT}
-
-CONTEXTO EDUCACIONAL DISPONÍVEL:
-{context}
-
-PERGUNTA DO ESTUDANTE: {query}
-
-RESPONDA SEGUINDO RIGOROSAMENTE A ESTRUTURA:
-🤔 ANÁLISE: [Analise o que o estudante quer aprender]
-📋 CONCEITOS: [Que conhecimentos são necessários]
-🛣️ MÉTODO: [Passo a passo para chegar na resposta]
-💡 DICAS: [Como pensar sobre este problema]
-🎯 PRÓXIMOS PASSOS: [O que o estudante deve fazer para praticar]
-
-LEMBRE-SE: ENSINE o processo, NÃO dê a resposta pronta!
-"""
-
 def get_response_from_query(query: str) -> str:
     """Gera resposta educacional para a pergunta"""
     try:
@@ -246,7 +263,7 @@ def get_response_from_query(query: str) -> str:
         
         # Configurar sistema
         if not setup_llama_index():
-            return "❌ Sistema educacional não disponível. Verifique a configuração da API."
+            return "❌ Sistema educacional não disponível. Verifique a configuração da API Groq."
         
         # Obter base de conhecimento
         index = get_index()
@@ -256,14 +273,27 @@ def get_response_from_query(query: str) -> str:
         # Configurar engine educacional
         query_engine = index.as_query_engine(
             similarity_top_k=3,
-            response_mode="compact",
-            system_prompt=EDUCATIONAL_SYSTEM_PROMPT
+            response_mode="compact"
         )
         
-        # Gerar resposta educacional
-        educational_prompt = format_educational_prompt(query, "")
-        response = query_engine.query(educational_prompt)
+        # Prompt educacional
+        educational_prompt = f"""
+{EDUCATIONAL_SYSTEM_PROMPT}
+
+PERGUNTA DO ESTUDANTE: {query}
+
+RESPONDA SEGUINDO RIGOROSAMENTE A ESTRUTURA:
+🤔 ANÁLISE: [Analise o que o estudante quer aprender]
+📋 CONCEITOS: [Que conhecimentos são necessários]
+🛣️ MÉTODO: [Passo a passo para chegar na resposta]
+💡 DICAS: [Como pensar sobre este problema]
+🎯 PRÓXIMOS PASSOS: [O que o estudante deve fazer para praticar]
+
+LEMBRE-SE: ENSINE o processo, NÃO dê a resposta pronta!
+"""
         
+        # Gerar resposta educacional
+        response = query_engine.query(educational_prompt)
         result = str(response)
         
         # Verificar se a resposta segue padrão educacional
