@@ -1,19 +1,10 @@
-# Instalar virtualenv
-pip install virtualenv
+para rodar localmente
+cd backend
+pip install -r requirements.txt  # se ainda não instalou
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# Criar ambiente virtual
-virtualenv venv
+# Terminal 2 - Frontend  
+cd frontend
+npm install
+npm run dev
 
-# Ativar ambiente virtual
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-
-# Instalar dependências
-pip install fastapi uvicorn python-dotenv llama-index llama-index-llms-groq aiofiles python-multipart PyPDF2 sentence-transformers llama-index-embeddings-huggingface
-
-
-# IMPORTANTE: Execute da raiz do projeto
-uvicorn backend.app.main:app --reload -
-- apos isso execute o front
