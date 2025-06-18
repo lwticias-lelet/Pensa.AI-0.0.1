@@ -1,4 +1,4 @@
-para rodar localmente
+#para rodar localmente
 cd backend
 pip install -r requirements.txt  # se ainda não instalou
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
