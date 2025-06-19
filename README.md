@@ -1,15 +1,15 @@
+PARA RODAR LOCALMENTE
 
-
-#para rodar localmente
+BACK END
+pip install -r requirements.txt
+.\venv\Scripts\Activate.ps1
 cd backend
-pip install -r requirements.txt  # se ainda não instalou
-python -m uvicorn app.main:app -reload 
+uvicorn app.main:app --reload
 
 
-
-
-# Terminal 2 - Frontend  
+ 
+FRONT END
+.\venv\Scripts\Activate.ps1
 cd frontend
 npm install
 npm run dev
-
