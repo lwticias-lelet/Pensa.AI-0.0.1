@@ -1,10 +1,12 @@
 import os
+import re
 from llama_index.core import (
     VectorStoreIndex,
     SimpleDirectoryReader,
     StorageContext,
     Settings,
-    Document
+    Document,
+    load_index_from_storage
 )
 from llama_index.llms.groq import Groq
 from dotenv import load_dotenv
@@ -20,34 +22,89 @@ UPLOADS_DIR = "backend/data/uploads"
 _index = None
 _initialized = False
 
-# SISTEMA DE PROMPTS EDUCACIONAIS
-EDUCATIONAL_SYSTEM_PROMPT = """
-Você é o Pensa.AI, um tutor educacional especializado. Sua missão é ENSINAR, não dar respostas prontas.
+# SISTEMA DE PROMPTS EDUCACIONAIS COMPLETO - ENSINA TUDO EXCETO RESULTADO FINAL
+COMPLETE_EDUCATIONAL_PROMPT = """
+VOCÊ É O PENSA.AI - TUTOR EDUCACIONAL ESPECIALISTA
 
-PRINCÍPIOS FUNDAMENTAIS:
-1. 🎓 NUNCA forneça respostas diretas
-2. 📚 SEMPRE ensine o processo de raciocínio
-3. 🔍 Guie o estudante a descobrir por si mesmo
-4. 📝 Use métodos pedagógicos eficazes
-5. 🎯 Foque apenas em educação e aprendizado
+MISSÃO: Ensinar COMPLETAMENTE como resolver problemas, incluindo fórmulas, métodos e exemplos, mas NUNCA dar o resultado final.
 
-ESTRUTURA OBRIGATÓRIA DE RESPOSTA:
-🤔 ANÁLISE: [O que a pergunta está pedindo]
-📋 CONCEITOS: [Conhecimentos necessários]
-🛣️ MÉTODO: [Passo a passo para resolver]
-💡 DICAS: [Como pensar sobre o problema]
-🎯 PRÓXIMOS PASSOS: [O que o estudante deve fazer]
+REGRAS EDUCACIONAIS OBRIGATÓRIAS:
+✅ SEMPRE forneça fórmulas completas e explicadas
+✅ SEMPRE ensine passo a passo detalhadamente
+✅ SEMPRE dê exemplos resolvidos (mas diferentes da pergunta)
+✅ SEMPRE explique conceitos fundamentais
+✅ SEMPRE mostre métodos e estratégias
+✅ SEMPRE conecte com conhecimentos anteriores
 
-IMPORTANTE: Ensine o PROCESSO, não a resposta final!
+❌ JAMAIS forneça o resultado final da pergunta específica
+❌ JAMAIS resolva completamente o problema pedido
+❌ JAMAIS dê a resposta numérica final
+
+ESTRUTURA OBRIGATÓRIA DE ENSINO:
+
+🎯 ENTENDENDO O PROBLEMA:
+[Analise que tipo de problema é e o que precisa ser resolvido]
+
+📚 CONCEITOS FUNDAMENTAIS:
+[Explique TODOS os conceitos necessários com definições completas]
+• Conceito 1: [Definição + importância + aplicações]
+• Conceito 2: [Definição + importância + aplicações]
+• [Continue para todos os conceitos]
+
+📐 FÓRMULAS E MÉTODOS:
+[Forneça TODAS as fórmulas necessárias com explicações]
+• Fórmula Principal: [fórmula] onde [explicar cada variável]
+• Fórmulas Auxiliares: [se necessário]
+• Quando usar cada fórmula: [critérios]
+
+🛠️ MÉTODO DE RESOLUÇÃO PASSO A PASSO:
+Passo 1: [O que fazer primeiro e como fazer]
+   💡 Como executar: [instruções detalhadas]
+   🔍 O que observar: [pontos importantes]
+
+Passo 2: [Próxima etapa e como executar]
+   💡 Como executar: [instruções detalhadas]
+   🔍 O que observar: [pontos importantes]
+
+[Continue para todos os passos necessários]
+
+📝 EXEMPLO RESOLVIDO COMPLETO:
+[Resolva um problema SIMILAR mas DIFERENTE do perguntado]
+Problema exemplo: [enunciado diferente]
+Solução passo a passo:
+- Identificação: [o que é dado e o que procurar]
+- Aplicação da fórmula: [mostrar cálculo completo]
+- Verificação: [como conferir se está correto]
+- Resultado: [mostrar resultado final do EXEMPLO]
+
+📝 SEGUNDO EXEMPLO:
+[Outro exemplo com variação para fixar o aprendizado]
+
+🔄 VERIFICAÇÃO E CONFERÊNCIA:
+[Como verificar se a resolução está correta]
+• Método 1: [forma de verificar]
+• Método 2: [outra forma]
+• Sinais de erro comum: [o que evitar]
+
+🎯 APLICANDO NO SEU PROBLEMA:
+[Orientações específicas para o problema perguntado SEM resolvê-lo]
+• Identifique: [o que procurar no problema]
+• Organize: [como estruturar os dados]
+• Aplique: [qual método usar]
+• Calcule: [quais passos seguir]
+• Verifique: [como conferir]
+
+🤔 REFLEXÕES PARA FIXAR:
+[Perguntas para o estudante consolidar o aprendizado]
+
+LEMBRE-SE: Ensine TUDO sobre como resolver, mas deixe o estudante chegar ao resultado final sozinho!
 """
 
 def setup_embedding_model():
-    """Configura modelo de embedding local/gratuito"""
+    """Configura modelo de embedding local"""
     try:
-        # Opção 1: Usar embedding local simples
         from llama_index.embeddings.huggingface import HuggingFaceEmbedding
         
-        # Modelo pequeno e gratuito
         embed_model = HuggingFaceEmbedding(
             model_name="sentence-transformers/all-MiniLM-L6-v2",
             cache_folder="./embeddings_cache"
@@ -58,22 +115,14 @@ def setup_embedding_model():
         return True
         
     except ImportError:
-        try:
-            # Opção 2: Usar embedding padrão do LlamaIndex
-            from llama_index.embeddings.openai import OpenAIEmbedding
-            from llama_index.core.embeddings import BaseEmbedding
-            
-            # Usar embedding mock/local
-            print("⚠️  Usando embedding básico local")
-            # Settings.embed_model será o padrão
-            return True
-            
-        except:
-            print("⚠️  Usando configuração de embedding padrão")
-            return True
+        print("⚠️ Usando embedding padrão")
+        return True
+    except Exception as e:
+        print(f"⚠️ Erro no embedding: {e}")
+        return True
 
 def setup_llama_index():
-    """Configura o LlamaIndex com foco educacional"""
+    """Configura LlamaIndex para ensino completo"""
     global _initialized
     
     if _initialized:
@@ -82,257 +131,507 @@ def setup_llama_index():
     groq_api_key = os.getenv("GROQ_API_KEY")
     
     if not groq_api_key:
-        print("⚠️  GROQ_API_KEY não encontrada no arquivo .env")
+        print("❌ GROQ_API_KEY não encontrada no arquivo .env")
         return False
     
     try:
-        # Configurar embedding primeiro (local/gratuito)
         setup_embedding_model()
         
-        # Configurar LLM Groq
+        # Configurações otimizadas para ensino detalhado
         llm = Groq(
-            model="llama3-8b-8192",  # Modelo recomendado para educação
+            model="llama3-8b-8192",
             api_key=groq_api_key,
+            temperature=0.2,  # Consistência com criatividade para exemplos
+            max_tokens=2500,  # Espaço para exemplos completos
+            timeout=35,
         )
         
         Settings.llm = llm
+        
+        # Teste de conectividade
+        print("🧪 Testando Groq...")
+        test_response = llm.complete("Teste de conectividade")
+        print("✅ Groq funcionando!")
+        
         _initialized = True
-        print("✅ Sistema educacional Pensa.AI configurado!")
+        print("✅ Sistema educacional COMPLETO configurado!")
         return True
         
     except Exception as e:
-        print(f"❌ Erro ao configurar sistema: {str(e)}")
+        print(f"❌ Erro ao configurar: {str(e)}")
         return False
 
 def ensure_directories():
-    """Garante que os diretórios necessários existem"""
+    """Garante diretórios necessários"""
     try:
-        os.makedirs(UPLOADS_DIR, exist_ok=True)
-        os.makedirs(PERSIST_DIR, exist_ok=True)
-        os.makedirs("./embeddings_cache", exist_ok=True)  # Cache para embeddings
+        directories = [UPLOADS_DIR, PERSIST_DIR, "./embeddings_cache"]
+        for directory in directories:
+            os.makedirs(directory, exist_ok=True)
         return True
     except Exception as e:
         print(f"❌ Erro ao criar diretórios: {str(e)}")
         return False
 
 def create_educational_index():
-    """Cria um índice com conteúdo educacional inicial"""
+    """Cria índice com conhecimento educacional completo"""
     try:
         educational_content = Document(
             text="""
-            Bem-vindo ao Pensa.AI - Seu Tutor Educacional!
+            PENSA.AI - SISTEMA EDUCACIONAL COMPLETO
             
-            Como funciona o aprendizado eficaz:
+            ESPECIALIZAÇÃO EM ENSINO DETALHADO:
             
-            1. QUESTIONAMENTO: Sempre questione o que você está aprendendo
-            2. CONEXÕES: Conecte novos conceitos com conhecimentos anteriores
-            3. PRÁTICA: Aplique o que aprendeu em diferentes contextos
-            4. REFLEXÃO: Pense sobre o processo de aprendizado
-            5. ENSINO: Ensine outros para consolidar o conhecimento
+            MATEMÁTICA - Métodos e Fórmulas Completas:
             
-            Métodos de estudo eficazes:
-            - Técnica Pomodoro para gestão de tempo
-            - Mapas mentais para organizar informações
-            - Flashcards para memorização
-            - Método Feynman para compreensão profunda
-            - Prática espaçada para retenção
+            ÁLGEBRA:
+            • Equações lineares: ax + b = c
+              - Método: isolar x dividindo por a
+              - Exemplo: 2x + 5 = 11 → 2x = 6 → x = 3
+            • Equações quadráticas: ax² + bx + c = 0
+              - Fórmula de Bhaskara: x = (-b ± √(b²-4ac))/2a
+              - Delta: Δ = b² - 4ac
+            • Sistemas de equações
+              - Método da substituição
+              - Método da eliminação
             
-            Áreas de conhecimento que posso te ajudar:
-            - Matemática: álgebra, geometria, cálculo
-            - Ciências: física, química, biologia
-            - Humanas: história, geografia, filosofia
-            - Linguagens: português, literatura, redação
-            - Tecnologia: programação, algoritmos
-            - Métodos de estudo e aprendizado
+            GEOMETRIA:
+            • Área do retângulo: A = base × altura
+            • Área do triângulo: A = (base × altura)/2
+            • Área do círculo: A = πr²
+            • Perímetro do círculo: P = 2πr
+            • Teorema de Pitágoras: a² + b² = c²
+            
+            FUNÇÕES:
+            • Função linear: f(x) = ax + b
+            • Função quadrática: f(x) = ax² + bx + c
+            • Análise de gráficos e propriedades
+            
+            FÍSICA - Leis e Fórmulas:
+            
+            MECÂNICA:
+            • Velocidade: v = Δs/Δt
+            • Aceleração: a = Δv/Δt
+            • MRU: s = s₀ + vt
+            • MRUV: s = s₀ + v₀t + at²/2
+            • Força: F = ma (2ª Lei de Newton)
+            • Trabalho: W = F × d × cos θ
+            • Energia cinética: Ec = mv²/2
+            • Energia potencial: Ep = mgh
+            
+            QUÍMICA - Conceitos e Cálculos:
+            
+            ESTEQUIOMETRIA:
+            • Mol: unidade de quantidade de matéria
+            • Massa molar: massa de 1 mol da substância
+            • n = m/M (número de mols)
+            • Balanceamento de equações
+            • Cálculos de proporção
+            
+            SOLUÇÕES:
+            • Concentração: C = n/V
+            • Molaridade: M = n/V
+            • Diluição: C₁V₁ = C₂V₂
+            
+            BIOLOGIA - Processos e Conceitos:
+            
+            GENÉTICA:
+            • Leis de Mendel
+            • Cruzamentos e probabilidades
+            • Heredograma e análise
+            
+            ECOLOGIA:
+            • Ciclos biogeoquímicos
+            • Relações ecológicas
+            • Fluxo de energia
+            
+            METODOLOGIA DE ENSINO:
+            1. Identificar conceitos necessários
+            2. Explicar cada conceito detalhadamente
+            3. Mostrar fórmulas e quando usá-las
+            4. Demonstrar com exemplos completos
+            5. Guiar aplicação no problema específico
+            6. Ensinar verificação de resultados
+            
+            ESTRATÉGIAS PEDAGÓGICAS:
+            - Partir do conhecido para o desconhecido
+            - Usar analogias e exemplos práticos
+            - Mostrar múltiplas formas de resolver
+            - Conectar teoria com aplicação
+            - Estimular raciocínio crítico
             """
         )
         
         index = VectorStoreIndex.from_documents([educational_content])
-        print("✅ Índice educacional básico criado")
+        print("✅ Índice educacional completo criado")
         return index
         
     except Exception as e:
-        print(f"❌ Erro ao criar índice educacional: {str(e)}")
+        print(f"❌ Erro ao criar índice: {str(e)}")
         return None
 
 def build_index_from_documents():
-    """Constrói índice a partir dos documentos educacionais"""
+    """Constrói índice educacional completo"""
     try:
         ensure_directories()
         
-        # Verificar PDFs educacionais
-        pdf_files = []
+        documents = []
+        
+        # Carregar PDFs educacionais
         if os.path.exists(UPLOADS_DIR):
             pdf_files = [f for f in os.listdir(UPLOADS_DIR) if f.lower().endswith('.pdf')]
-        
-        if not pdf_files:
-            print("📚 Criando base de conhecimento educacional inicial")
-            return create_educational_index()
-        
-        print(f"📖 Carregando {len(pdf_files)} material(is) educacional(is)...")
-        
-        # Carregar documentos educacionais
-        documents = SimpleDirectoryReader(UPLOADS_DIR).load_data()
-        
-        if not documents:
-            return create_educational_index()
-        
-        # Adicionar contexto educacional aos documentos
-        for doc in documents:
-            doc.text = f"""
-MATERIAL EDUCACIONAL:
+            
+            if pdf_files:
+                print(f"📖 Processando {len(pdf_files)} materiais...")
+                try:
+                    loaded_docs = SimpleDirectoryReader(UPLOADS_DIR).load_data()
+                    for doc in loaded_docs:
+                        enhanced_text = f"""
+MATERIAL EDUCACIONAL PARA ENSINO COMPLETO:
+
+CONTEÚDO ORIGINAL:
 {doc.text}
 
-INSTRUÇÕES PARA O TUTOR:
-- Use este material para ensinar, não para dar respostas diretas
-- Guie o estudante através do processo de aprendizado
-- Faça perguntas que estimulem o pensamento crítico
-- Conecte este conteúdo com outros conhecimentos
-"""
+INSTRUÇÕES PEDAGÓGICAS DETALHADAS:
+
+1. ENSINO COMPLETO DE CONCEITOS:
+- Explique TODOS os conceitos fundamentais presentes no material
+- Forneça definições claras e completas
+- Mostre aplicações práticas e importância
+- Conecte com outros conhecimentos
+
+2. FÓRMULAS E MÉTODOS:
+- Apresente TODAS as fórmulas relevantes
+- Explique cada variável e sua unidade
+- Mostre quando e como usar cada fórmula
+- Dê dicas de memorização e compreensão
+
+3. RESOLUÇÃO PASSO A PASSO:
+- Ensine metodologia completa de resolução
+- Mostre cada etapa detalhadamente
+- Explique o raciocínio por trás de cada passo
+- Indique pontos de atenção e erros comuns
+
+4. EXEMPLOS RESOLVIDOS:
+- Resolva exemplos SIMILARES mas DIFERENTES da pergunta
+- Mostre resolução completa com resultado final nos exemplos
+- Varie tipos de problemas para fixar conceitos
+- Explique estratégias de abordagem
+
+5. APLICAÇÃO GUIADA:
+- Oriente como aplicar no problema específico
+- Identifique dados e incógnitas
+- Sugira estratégia de resolução
+- NÃO resolva completamente o problema perguntado
+
+6. VERIFICAÇÃO E CONFERÊNCIA:
+- Ensine métodos de verificação
+- Mostre como identificar erros
+- Dê dicas de conferência de resultados
+                        """
+                        enhanced_doc = Document(text=enhanced_text)
+                        documents.append(enhanced_doc)
+                        
+                except Exception as e:
+                    print(f"⚠️ Erro ao processar PDFs: {e}")
         
-        # Adicionar documento educacional básico
-        educational_base = create_educational_index()
-        if educational_base:
-            base_docs = list(educational_base.docstore.docs.values())
-            documents.extend(base_docs)
+        # Base educacional sempre presente
+        base_content = Document(
+            text="""
+            PENSA.AI - TUTOR EDUCACIONAL ESPECIALISTA
+            
+            MISSÃO: Ensinar de forma completa e detalhada
+            
+            METODOLOGIA COMPLETA:
+            1. Análise do problema e identificação de conceitos
+            2. Explicação detalhada de todos os conceitos
+            3. Apresentação de fórmulas e métodos
+            4. Demonstração com exemplos resolvidos
+            5. Orientação para aplicação no problema específico
+            6. Ensino de verificação e conferência
+            
+            PRINCÍPIOS PEDAGÓGICOS:
+            - Ensinar TUDO sobre como resolver
+            - Fornecer fórmulas completas e explicadas
+            - Dar exemplos detalhados e resolvidos
+            - Guiar passo a passo a aplicação
+            - NUNCA dar o resultado final do problema perguntado
+            - Estimular aprendizado ativo e descoberta
+            """
+        )
+        documents.append(base_content)
         
+        # Criar índice
         index = VectorStoreIndex.from_documents(documents)
-        index.storage_context.persist(persist_dir=PERSIST_DIR)
         
-        print(f"💾 Base educacional criada com {len(documents)} recursos")
+        # Salvar índice
+        try:
+            index.storage_context.persist(persist_dir=PERSIST_DIR)
+            print("💾 Índice educacional salvo")
+        except Exception as e:
+            print(f"⚠️ Erro ao salvar: {e}")
+        
+        print(f"✅ Base educacional completa com {len(documents)} recursos")
         return index
         
     except Exception as e:
-        print(f"❌ Erro ao construir base educacional: {str(e)}")
+        print(f"❌ Erro ao construir base: {str(e)}")
         return create_educational_index()
 
 def get_index():
-    """Retorna o índice educacional"""
+    """Retorna índice educacional"""
     global _index
     
     if _index is not None:
         return _index
     
     try:
+        # Tentar carregar índice existente
         if os.path.exists(PERSIST_DIR) and os.listdir(PERSIST_DIR):
-            print("📚 Carregando base de conhecimento educacional...")
-            storage_context = StorageContext.from_defaults(persist_dir=PERSIST_DIR)
-            _index = VectorStoreIndex.load_from_storage(storage_context)
-            print("✅ Base educacional carregada!")
-            return _index
-        else:
-            print("🆕 Criando nova base educacional...")
-            _index = build_index_from_documents()
-            return _index
-            
+            print("📚 Carregando base educacional...")
+            try:
+                storage_context = StorageContext.from_defaults(persist_dir=PERSIST_DIR)
+                _index = load_index_from_storage(storage_context)
+                print("✅ Base carregada!")
+                return _index
+            except Exception as e:
+                print(f"⚠️ Erro ao carregar: {e}")
+                print("🔄 Criando nova base...")
+                # Limpar índice incompatível
+                try:
+                    import shutil
+                    shutil.rmtree(PERSIST_DIR)
+                    ensure_directories()
+                except:
+                    pass
+        
+        # Criar nova base
+        print("🆕 Criando base educacional...")
+        _index = build_index_from_documents()
+        return _index
+        
     except Exception as e:
-        print(f"❌ Erro ao carregar base: {str(e)}")
+        print(f"❌ Erro geral: {str(e)}")
         _index = create_educational_index()
         return _index
 
 def is_educational_query(query: str) -> bool:
-    """Verifica se a pergunta é educacional"""
+    """Verificação permissiva para perguntas educacionais"""
     non_educational = [
-        'tempo', 'clima', 'notícia', 'fofoca', 'receita culinária',
-        'comprar', 'vender', 'preço', 'dinheiro', 'investimento',
-        'relacionamento amoroso', 'namoro', 'celebridade'
+        'clima hoje', 'temperatura agora', 'notícias atuais',
+        'que horas são', 'data de hoje'
     ]
     
     query_lower = query.lower()
-    return not any(keyword in query_lower for keyword in non_educational)
+    return not any(term in query_lower for term in non_educational)
+
+def remove_final_answers_from_specific_problem(response: str, original_query: str) -> str:
+    """
+    Remove apenas resultados finais do problema específico,
+    mas mantém resultados de exemplos educacionais
+    """
+    
+    # Padrões de resposta final para o problema específico
+    final_answer_patterns = [
+        r'(?:portanto|logo|então|assim),?\s*(?:a\s*resposta\s*é|o\s*resultado\s*é|temos)\s*[:\s]*(\d+(?:[.,]\d+)?)',
+        r'(?:^|\n)\s*[x-z]\s*=\s*(\d+(?:[.,]\d+)?)\s*(?:\n|$)',
+        r'(?:resposta|resultado|solução)\s*final\s*[:\s]*(\d+(?:[.,]\d+)?)',
+    ]
+    
+    # Substituir apenas respostas finais específicas
+    for pattern in final_answer_patterns:
+        response = re.sub(
+            pattern,
+            r'[RESULTADO FINAL REMOVIDO - Agora é sua vez de calcular!]',
+            response,
+            flags=re.IGNORECASE | re.MULTILINE
+        )
+    
+    return response
 
 def get_response_from_query(query: str) -> str:
-    """Gera resposta educacional para a pergunta"""
+    """
+    Gera resposta educacional COMPLETA: ensina tudo, dá exemplos,
+    mas não resolve o problema específico até o final
+    """
     try:
-        print(f"🎓 Pergunta educacional recebida: {query}")
+        print(f"🎓 Processando pergunta: {query[:50]}...")
         
-        # Verificar se é pergunta educacional
+        # Verificação educacional
         if not is_educational_query(query):
             return """
-🎓 Como tutor educacional, só posso ajudar com questões de aprendizado! 
+🎓 Como tutor educacional, foco em questões de aprendizado!
 
-📚 Posso te ensinar sobre:
-• Matemática, Física, Química, Biologia
-• História, Geografia, Literatura  
-• Programação e Tecnologia
-• Métodos de estudo e aprendizado
-• E muito mais!
+📚 POSSO ENSINAR COMPLETAMENTE:
+• Matemática: álgebra, geometria, cálculo, estatística
+• Física: mecânica, termodinâmica, eletromagnetismo
+• Química: estequiometria, soluções, reações
+• Biologia: genética, ecologia, fisiologia
+• Métodos de resolução de problemas
 
-🤔 Que tal reformular sua pergunta focando no que você gostaria de APRENDER?
+🎯 MEU MÉTODO INCLUI:
+✅ Explicação completa de conceitos
+✅ Todas as fórmulas necessárias
+✅ Métodos passo a passo
+✅ Exemplos resolvidos detalhadamente
+✅ Orientação para seu problema específico
+
+🤔 Reformule sua pergunta para algo educacional!
             """
         
-        # Configurar sistema
+        # Verificar sistema
         if not setup_llama_index():
-            return "❌ Sistema educacional não disponível. Verifique a configuração da API Groq."
+            return """
+❌ Sistema não disponível no momento.
+
+🎓 METODOLOGIA GERAL PARA QUALQUER PROBLEMA:
+
+🎯 ANÁLISE: Identifique tipo de problema e conceitos
+📚 ESTUDO: Domine conceitos fundamentais necessários
+📐 FÓRMULAS: Identifique e compreenda fórmulas aplicáveis
+🛠️ MÉTODO: Siga estratégia passo a passo
+📝 EXEMPLOS: Pratique com casos similares
+🔍 VERIFICAÇÃO: Confira resultado e coerência
+
+Configure GROQ_API_KEY e tente novamente!
+            """
         
         # Obter base de conhecimento
         index = get_index()
         if index is None:
-            return "❌ Base de conhecimento educacional não disponível."
+            return "❌ Base de conhecimento não disponível."
         
-        # Configurar engine educacional
+        # Configurar query engine
         query_engine = index.as_query_engine(
             similarity_top_k=3,
             response_mode="compact"
         )
         
-        # Prompt educacional
-        educational_prompt = f"""
-{EDUCATIONAL_SYSTEM_PROMPT}
+        # Prompt educacional completo
+        complete_prompt = f"""
+{COMPLETE_EDUCATIONAL_PROMPT}
 
 PERGUNTA DO ESTUDANTE: {query}
 
-RESPONDA SEGUINDO RIGOROSAMENTE A ESTRUTURA:
-🤔 ANÁLISE: [Analise o que o estudante quer aprender]
-📋 CONCEITOS: [Que conhecimentos são necessários]
-🛣️ MÉTODO: [Passo a passo para chegar na resposta]
-💡 DICAS: [Como pensar sobre este problema]
-🎯 PRÓXIMOS PASSOS: [O que o estudante deve fazer para praticar]
+IMPORTANTE: Ensine TUDO sobre como resolver este tipo de problema. Dê fórmulas, métodos, exemplos completos resolvidos (mas diferentes), e oriente a aplicação, mas NÃO resolva completamente o problema específico perguntado.
 
-LEMBRE-SE: ENSINE o processo, NÃO dê a resposta pronta!
-"""
+Sua resposta deve ser um guia completo de aprendizado!
+        """
         
-        # Gerar resposta educacional
-        response = query_engine.query(educational_prompt)
-        result = str(response)
+        print("🔄 Gerando resposta educacional completa...")
         
-        # Verificar se a resposta segue padrão educacional
-        if not any(emoji in result for emoji in ['🤔', '📋', '🛣️', '💡', '🎯']):
-            result = f"""
-🤔 ANÁLISE: Você quer aprender sobre: {query}
+        try:
+            response = query_engine.query(complete_prompt)
+            result = str(response)
+            
+            # Remover apenas resultados finais do problema específico
+            result = remove_final_answers_from_specific_problem(result, query)
+            
+            # Verificar se tem conteúdo educacional suficiente
+            if len(result) < 200:
+                result = f"""
+🎯 ENTENDENDO SEU PROBLEMA: {query}
 
-📋 CONCEITOS: Para responder isso, você precisa entender os fundamentos do tema.
+📚 CONCEITOS FUNDAMENTAIS NECESSÁRIOS:
+Para resolver este tipo de problema, você precisa dominar conceitos específicos que vou explicar detalhadamente.
 
-🛣️ MÉTODO: 
-1. Primeiro, identifique os conceitos-chave
-2. Pesquise em fontes confiáveis
-3. Conecte com conhecimentos anteriores
-4. Pratique com exemplos
+📐 FÓRMULAS E MÉTODOS:
+Vou apresentar todas as fórmulas relevantes e ensinar quando e como usar cada uma.
 
-💡 DICAS: Sempre questione o "porquê" por trás dos conceitos!
+🛠️ MÉTODO DE RESOLUÇÃO:
+Passo 1: Análise e identificação do que é dado e procurado
+Passo 2: Escolha da estratégia e fórmulas adequadas
+Passo 3: Aplicação sistemática dos conceitos
+Passo 4: Cálculos organizados e verificação
 
-🎯 PRÓXIMOS PASSOS: Que tal começar pesquisando os termos principais desta pergunta?
+📝 EXEMPLO SIMILAR RESOLVIDO:
+Vou resolver um problema parecido para demonstrar o método completo.
+
+🎯 APLICANDO NO SEU CASO:
+Agora você pode seguir os mesmos passos para resolver seu problema específico.
 
 {result}
+                """
+            
+            print("✅ Resposta educacional completa gerada")
+            return result
+            
+        except Exception as e:
+            print(f"❌ Erro na consulta: {e}")
+            return f"""
+🎓 GUIA EDUCACIONAL PARA: "{query}"
+
+🎯 METODOLOGIA UNIVERSAL DE RESOLUÇÃO:
+
+📚 CONCEITOS BÁSICOS:
+1. 🔍 IDENTIFIQUE: Que tipo de problema é este?
+2. 📖 ESTUDE: Quais conceitos fundamentais estão envolvidos?
+3. 🔗 CONECTE: Como se relaciona com conhecimentos anteriores?
+
+📐 FÓRMULAS E FERRAMENTAS:
+1. 🧮 IDENTIFIQUE: Quais fórmulas são aplicáveis?
+2. 📝 COMPREENDA: O que significa cada variável?
+3. 🎯 APLIQUE: Como usar cada fórmula corretamente?
+
+🛠️ ESTRATÉGIA PASSO A PASSO:
+Passo 1: Leia e compreenda completamente o problema
+Passo 2: Identifique dados fornecidos e o que procura
+Passo 3: Escolha método e fórmulas adequadas
+Passo 4: Execute cálculos de forma organizada
+Passo 5: Verifique coerência do resultado
+
+📝 PRÁTICA:
+- Resolva problemas similares
+- Varie os dados para entender o padrão
+- Compare diferentes métodos de resolução
+
+🔍 VERIFICAÇÃO:
+- Confira se o resultado faz sentido
+- Teste com valores conhecidos
+- Use métodos alternativos para conferir
+
+Erro técnico: {str(e)[:100]}...
             """
         
-        print(f"✅ Resposta educacional gerada")
-        return result
-        
     except Exception as e:
+        print(f"❌ Erro geral: {str(e)}")
         return f"""
-❌ Erro no sistema educacional: {str(e)}
+🎓 SISTEMA EDUCACIONAL PARA: "{query}"
 
-🎓 Mas posso te dar uma dica geral: para aprender qualquer coisa:
-1. 🤔 Questione o que você quer saber
-2. 📚 Pesquise em fontes confiáveis  
-3. 🛣️ Divida em passos menores
-4. 💡 Pratique com exemplos
-5. 🎯 Ensine para alguém!
+📚 MÉTODO CIENTÍFICO DE APRENDIZADO:
+
+🎯 ANÁLISE DO PROBLEMA:
+- Identifique claramente o que é pedido
+- Reconheça o tipo de problema
+- Liste informações disponíveis
+
+📐 FERRAMENTAS NECESSÁRIAS:
+- Conceitos teóricos fundamentais
+- Fórmulas e equações aplicáveis
+- Métodos de cálculo adequados
+
+🛠️ PROCESSO DE RESOLUÇÃO:
+1. 📋 ORGANIZE: Dados e incógnitas
+2. 🎯 PLANEJE: Estratégia de abordagem
+3. 🧮 EXECUTE: Cálculos passo a passo
+4. ✅ VERIFIQUE: Coerência dos resultados
+
+📝 ESTRATÉGIAS DE ESTUDO:
+- Pratique problemas variados
+- Entenda o "porquê" de cada passo
+- Conecte teoria com aplicação prática
+- Desenvolva intuição matemática
+
+🔍 DICAS IMPORTANTES:
+- Sempre organize bem os dados
+- Desenhe diagramas quando possível
+- Confira unidades de medida
+- Teste com casos especiais
+
+Erro do sistema: {str(e)}
         """
 
 def update_index():
-    """Atualiza a base educacional"""
+    """Atualiza base educacional"""
     global _index
     
     try:
@@ -344,22 +643,30 @@ def update_index():
         _index = None
         _index = build_index_from_documents()
         
-        if _index:
-            print("✅ Base educacional atualizada!")
-            return True
-        else:
-            print("❌ Falha ao atualizar base")
-            return False
-            
+        success = _index is not None
+        print(f"{'✅' if success else '❌'} Base {'atualizada' if success else 'falhou'}")
+        return success
+        
     except Exception as e:
         print(f"❌ Erro ao atualizar: {str(e)}")
         return False
 
-# Inicialização
-print("🎓 Inicializando Pensa.AI - Sistema Educacional...")
-if setup_llama_index():
-    ensure_directories()
-    get_index()
-    print("✅ Sistema educacional Pensa.AI pronto para ensinar!")
-else:
-    print("⚠️  Sistema iniciado com limitações")
+# Inicialização do sistema educacional completo
+print("🎓 Inicializando Pensa.AI - SISTEMA EDUCACIONAL COMPLETO...")
+print("📋 CARACTERÍSTICAS:")
+print("   ✅ Ensina conceitos detalhadamente")
+print("   ✅ Fornece fórmulas completas")
+print("   ✅ Dá exemplos resolvidos")
+print("   ✅ Orienta passo a passo")
+print("   ❌ NÃO dá resultado final do problema específico")
+
+try:
+    if setup_llama_index():
+        ensure_directories()
+        get_index()
+        print("✅ Sistema EDUCACIONAL COMPLETO pronto!")
+        print("🎯 Missão: Ensinar TUDO exceto a resposta final!")
+    else:
+        print("⚠️ Sistema com limitações - verifique GROQ_API_KEY")
+except Exception as e:
+    print(f"❌ Erro na inicialização: {e}")

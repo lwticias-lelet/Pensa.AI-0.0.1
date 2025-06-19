@@ -1,6 +1,8 @@
-fastapi
+﻿fastapi
 uvicorn[standard]
 llama-index
+llama-index-llms-openai
+llama-index-embeddings-openai
 aiofiles
 python-multipart
 python-dotenv

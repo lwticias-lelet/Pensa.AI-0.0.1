@@ -1,0 +1,10 @@
+ fastapi
+uvicorn[standard]
+llama-index
+aiofiles
+python-multipart
+python-dotenv
+PyPDF2
+openai
+llama-index-llms-openai
+llama-index-embeddings-openai
