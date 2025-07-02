@@ -41,4 +41,5 @@ frontend/.vite/
 ehthumbs.db
 Icon?
 desktop.ini
-*.orig
+*.orig.
+.env
