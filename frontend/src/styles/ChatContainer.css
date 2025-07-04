@@ -1,0 +1,52 @@
+/* ==========================================
+   CHAT CONTAINER - PENSA.AI
+   ========================================== */
+
+.chat-container {
+  flex: 1;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+  height: 100vh;
+}
+
+.chat-container.expanded {
+  max-width: none;
+}
+
+/* ==========================================
+   RESPONSIVIDADE - CHAT CONTAINER
+   ========================================== */
+
+@media (max-width: 768px) {
+  .chat-container {
+    height: 100vh;
+    min-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .chat-container.expanded {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-container {
+    min-height: 100vh;
+  }
+}
+
+/* ==========================================
+   MODO ESCURO - CHAT CONTAINER
+   ========================================== */
+
+@media (prefers-color-scheme: dark) {
+  .chat-container {
+    background: #2d3748;
+    color: #e2e8f0;
+  }
+}

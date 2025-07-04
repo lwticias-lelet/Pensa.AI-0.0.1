@@ -1,0 +1,12 @@
+/* ==========================================
+   APP.CSS - IMPORTAÇÕES ORGANIZADAS
+   PENSA.AI - VERSÃO MODULARIZADA
+   ========================================== */
+
+/* Importar todos os estilos modularizados */
+@import './styles/globals.css';
+@import './styles/ChatContainer.css';
+@import './styles/ChatHeader.css';
+@import './styles/MessageComponents.css';
+@import './styles/MessageInput.css';
+@import './styles/SidebarComponents.css';
