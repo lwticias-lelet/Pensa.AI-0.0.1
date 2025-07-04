@@ -1,0 +1,177 @@
+/* ==========================================
+   CHAT HEADER - PENSA.AI
+   ========================================== */
+
+.chat-header {
+  background: linear-gradient(transparent);
+  padding: 20px 25px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 80px;
+}
+
+.chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.sidebar-toggle-btn:focus {
+  outline: 2px solid #4facfe;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.chat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-title {
+  font-size: 1.6em;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.online-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  opacity: 0.9;
+  margin-top: 5px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #4ade80;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+}
+
+.new-chat-header-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  border-radius: 10px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.new-chat-header-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.new-chat-header-btn:focus {
+  outline: 2px solid #4facfe;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.7; 
+    transform: scale(1.1);
+  }
+}
+
+/* ==========================================
+   RESPONSIVIDADE - CHAT HEADER
+   ========================================== */
+
+@media (max-width: 768px) {
+  .chat-header {
+    padding: 15px 20px;
+    min-height: 70px;
+  }
+
+  .chat-title {
+    font-size: 1.4em;
+  }
+
+  .online-status {
+    font-size: 0.8em;
+  }
+
+  .new-chat-header-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .sidebar-toggle-btn {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-header {
+    padding: 12px 15px;
+    min-height: 60px;
+  }
+
+  .chat-title {
+    font-size: 1.2em;
+  }
+
+  .online-status {
+    font-size: 0.75em;
+  }
+
+  .new-chat-header-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .sidebar-toggle-btn {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+}
+
+/* ==========================================
+   IMPRESSÃO - CHAT HEADER (SEM WARNINGS)
+   ========================================== */
+
+@media print {
+  .chat-header {
+    background: #4facfe;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact; /* Versão atualizada */
+  }
+
+  .sidebar-toggle-btn,
+  .new-chat-header-btn {
+    display: none;
+  }
+}

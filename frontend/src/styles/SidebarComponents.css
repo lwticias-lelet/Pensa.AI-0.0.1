@@ -1,0 +1,316 @@
+/* ==========================================
+   SIDEBAR COMPONENTS - PENSA.AI
+   ========================================== */
+
+.sidebar {
+  width: 280px;
+  background: #2c3e50;
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 10;
+  height: 100vh;
+  overflow: hidden; /* Previne rolagem horizontal */
+}
+
+.sidebar.hidden {
+  transform: translateX(-100%);
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.sidebar.visible {
+  transform: translateX(0);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #34495e;
+  flex-shrink: 0; /* Não reduz o header */
+}
+
+.sidebar-header-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden; /* Previne overflow */
+}
+
+.sidebar-title {
+  font-size: 1.2em;
+  font-weight: 600;
+  color: #ecf0f1;
+  white-space: nowrap; /* Evita quebra de linha */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.new-chat-btn {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(79, 172, 254, 0.3);
+  white-space: nowrap; /* Evita quebra de linha */
+  flex-shrink: 0; /* Não reduz o botão */
+}
+
+.new-chat-btn:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+}
+
+.new-chat-btn:focus {
+  outline: 2px solid #4facfe;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden; /* Remove rolagem horizontal */
+  scrollbar-width: thin;
+  scrollbar-color: #4a5f7a #2c3e50;
+  min-height: 0; /* Permite flex shrink */
+}
+
+.history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: #34495e;
+  border-radius: 4px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  border-radius: 4px;
+}
+
+.history-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.history-item {
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  background: #34495e;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9em;
+  line-height: 1.3;
+  border-left: 3px solid transparent;
+  overflow: hidden; /* Previne overflow */
+  word-wrap: break-word; /* Quebra palavras longas */
+  hyphens: auto; /* Hifenização automática */
+}
+
+.history-item > div:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.history-item:hover {
+  background: #4a5f7a;
+  transform: translateX(5px);
+  border-left-color: #4facfe;
+}
+
+.history-item:focus {
+  outline: 2px solid #4facfe;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.history-item.active {
+  border-left-color: #00f2fe;
+  color: white;
+  background: #4a5f7a;
+}
+
+.history-meta {
+  font-size: 0.8em;
+  opacity: 0.7;
+  margin-top: 5px;
+  color: #bdc3c7;
+  white-space: nowrap;
+}
+
+.no-history {
+  text-align: center;
+  padding: 20px;
+  opacity: 0.6;
+  font-size: 0.9em;
+  color: #bdc3c7;
+  font-style: italic;
+}
+
+.clear-history {
+  background: transparent;
+  color: white;
+  border: 2px solid #e74c3c;
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  flex-shrink: 0; /* Não reduz o botão */
+}
+
+.clear-history:hover {
+  background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.clear-history:focus {
+  outline: 2px solid #4facfe;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Overlay para mobile - clicável */
+.sidebar-overlay {
+  display: none;
+}
+
+/* ==========================================
+   RESPONSIVIDADE - SIDEBAR
+   ========================================== */
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 1000; /* Z-index maior para sobrepor tudo */
+    border-radius: 0;
+    padding: 15px;
+  }
+
+  .sidebar.hidden {
+    transform: translateX(-100%);
+    width: 280px;
+    padding: 15px;
+  }
+
+  .sidebar-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+
+  .sidebar-title {
+    font-size: 1.1em;
+  }
+
+  .new-chat-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .history-item {
+    padding: 10px 12px;
+    font-size: 0.85em;
+  }
+
+  .history-item:hover {
+    transform: translateX(3px);
+  }
+
+  .clear-history {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  /* Overlay para mobile - VISÍVEL */
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999; /* Z-index menor que o sidebar */
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .sidebar.visible + .sidebar-overlay,
+  .sidebar-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    width: 250px;
+    padding: 12px;
+  }
+
+  .sidebar.hidden {
+    width: 250px;
+    padding: 12px;
+  }
+
+  .sidebar-title {
+    font-size: 1em;
+  }
+
+  .history-item {
+    padding: 8px 10px;
+    font-size: 0.8em;
+    margin-bottom: 6px;
+  }
+
+  .new-chat-btn {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .clear-history {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
+/* ==========================================
+   IMPRESSÃO - SIDEBAR
+   ========================================== */
+
+@media print {
+  .sidebar,
+  .sidebar-overlay {
+    display: none;
+  }
+}

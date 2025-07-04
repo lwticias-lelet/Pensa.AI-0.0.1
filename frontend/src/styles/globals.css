@@ -1,0 +1,439 @@
+/* ==========================================
+   ESTILOS GLOBAIS - PENSA.AI
+   ========================================== */
+
+/* Reset e configurações base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
+              'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #333;
+  line-height: 1.6;
+  /* CORREÇÃO: Remove qualquer margin/padding que possa interferir */
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  overflow: hidden;
+  /* CORREÇÃO: Garante que não há espaços extras */
+  margin: 0;
+  padding: 0;
+}
+
+/* ==========================================
+   LAYOUT PRINCIPAL - CORRIGIDO
+   ========================================== */
+
+.app-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  gap: 0;
+  position: relative;
+  overflow: hidden;
+  /* CORREÇÃO: Garante altura fixa */
+  min-height: 100vh;
+  max-height: 100vh;
+}
+
+/* ==========================================
+   CHAT CONTAINER - VERSÃO CORRIGIDA
+   ========================================== */
+
+.chat-container {
+  flex: 1;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+  height: 100vh;
+  /* CORREÇÃO: Força altura específica */
+  min-height: 100vh;
+  max-height: 100vh;
+}
+
+.chat-container.expanded {
+  max-width: none;
+}
+
+/* ==========================================
+   RESPONSIVIDADE MOBILE - CORRIGIDA
+   ========================================== */
+
+@media (max-width: 768px) {
+  html, body {
+    height: 100%;
+    /* CORREÇÃO: Remove qualquer overflow que cause problemas */
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+
+  #root {
+    height: 100vh;
+    width: 100vw;
+    /* CORREÇÃO: Garante que ocupe toda a tela */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  .app-container {
+    height: 100vh;
+    /* CORREÇÃO: Remove gaps que podem causar problemas */
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    /* CORREÇÃO: Fixa a altura */
+    min-height: 100vh;
+    max-height: 100vh;
+    position: relative;
+  }
+
+  .chat-container {
+    height: 100vh;
+    min-height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+    /* CORREÇÃO: Garante que o flex funcione corretamente */
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .chat-container.expanded {
+    margin-left: 0;
+  }
+
+   .chat-container {
+    /*Padding bottom para o input fixo */
+    padding-bottom: 80px;
+  }
+
+  .messages-area {
+    /* Padding bottom para não ficar atrás do input */
+    padding-bottom: 20px;
+    margin-bottom: 0;
+  }
+
+  /* Remove o input-wrapper do fluxo normal */
+  .input-wrapper {
+    position: fixed !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+  }
+
+    html {
+    /*Altura fixa para evitar redimensionamento */
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+
+  body {
+    /*Altura fixa */
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+
+  #root {
+    /*Altura fixa */
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+}
+
+@media (max-width: 480px) {
+  html, body {
+    /* CORREÇÃO: Força altura específica em telas pequenas */
+    height: 100vh;
+    min-height: 100vh;
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .chat-container {
+    min-height: 100vh;
+    max-height: 100vh;
+    /* CORREÇÃO: Remove qualquer espaçamento extra */
+    margin: 0;
+    padding: 0;
+  }
+
+    .chat-container {
+    /* CORREÇÃO: Padding menor para telas pequenas */
+    padding-bottom: 70px;
+  }
+
+  .messages-area {
+    padding-bottom: 15px;
+  }
+}
+
+/* ==========================================
+   CORREÇÕES ESPECÍFICAS PARA O HEADER
+   ========================================== */
+
+/* Garante que o header não seja empurrado para cima */
+.chat-header {
+  /* CORREÇÃO: Remove flex-shrink que pode causar problemas */
+  flex-shrink: 0;
+  /* CORREÇÃO: Altura mínima garantida */
+  min-height: 80px;
+  /* CORREÇÃO: Posição relativa para garantir que fique no lugar */
+  position: relative;
+  z-index: 10;
+  width: 100%;
+}
+
+/* ==========================================
+   CORREÇÕES PARA A ÁREA DE MENSAGENS
+   ========================================== */
+
+.messages-area {
+  /* CORREÇÃO: Permite que a área de mensagens cresça mas não empurre o header */
+  flex: 1;
+  overflow-y: auto;
+  /* CORREÇÃO: Garante altura mínima */
+  min-height: 0;
+}
+
+/* ==========================================
+   CORREÇÕES PARA O INPUT
+   ========================================== */
+
+.input-wrapper {
+  /* CORREÇÃO: Remove flex-shrink para manter o input no lugar */
+  flex-shrink: 0;
+  /* CORREÇÃO: Garante que fique na parte inferior */
+  position: relative;
+  z-index: 5;
+}
+
+/* ==========================================
+   SCROLLBAR PERSONALIZADA
+   ========================================== */
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #4facfe #f1f5f9;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* ==========================================
+   ANIMAÇÕES E TRANSIÇÕES GLOBAIS
+   ========================================== */
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.bounce-in {
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  70% { transform: scale(0.9); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ==========================================
+   ESTADOS E UTILIDADES GLOBAIS
+   ========================================== */
+
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+  filter: grayscale(20%);
+}
+
+.button-pressed {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+.highlight {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  animation: highlightPulse 2s ease-in-out;
+}
+
+@keyframes highlightPulse {
+  0%, 100% { background: transparent; }
+  50% { background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); }
+}
+
+/* ==========================================
+   ACESSIBILIDADE
+   ========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.focus-visible {
+  outline: 2px solid #4facfe;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-contrast: high) {
+  .status-dot {
+    background: #00ff00;
+    box-shadow: 0 0 10px #00ff00;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  }
+
+  .chat-container {
+    background: #2d3748;
+    color: #e2e8f0;
+  }
+}
+
+/* ==========================================
+   IMPRESSÃO
+   ========================================== */
+
+@media print {
+  body {
+    background: white;
+    padding: 0;
+  }
+  
+  .app-container {
+    flex-direction: column;
+    height: auto;
+    max-width: 100%;
+    box-shadow: none;
+  }
+}
+
+/* ==========================================
+   CORREÇÃO PARA TECLADO iOS
+   ========================================== */
+
+/* Específico para iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 768px) {
+    .input-wrapper {
+      /* CORREÇÃO: Considera safe area do iOS */
+      padding-bottom: calc(15px + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* ==========================================
+   CORREÇÃO PARA ANDROID
+   ========================================== */
+
+/* Específico para Android Chrome */
+@media (max-width: 768px) and (orientation: portrait) {
+  .input-wrapper {
+    /* CORREÇÃO: Garante visibilidade no Android */
+    min-height: 60px;
+  }
+}
+
+.backend-status {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 1001;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.backend-status.online {
+  background: rgba(34, 197, 94, 0.9);
+  color: white;
+}
+
+.backend-status.limited {
+  background: rgba(245, 158, 11, 0.9);
+  color: white;
+}
+
+.backend-status.offline {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+
+/* Responsividade para o indicador */
+@media (max-width: 768px) {
+  .backend-status {
+    top: 5px;
+    right: 5px;
+    font-size: 10px;
+    padding: 6px 10px;
+  }
+}
+

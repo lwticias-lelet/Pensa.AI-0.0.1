@@ -1,0 +1,376 @@
+/* ==========================================
+   MESSAGE INPUT - PENSA.AI
+   ========================================== */
+
+.input-wrapper {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  z-index: 100; /* Z-index maior para ficar acima de tudo */
+  padding: 20px;
+  /* CORREÇÃO: Garante que não seja cortado */
+  width: 100%;
+  flex-shrink: 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+.input-area {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  border-width: 0;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.input-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 25px;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+  position: relative;
+  width: 100%;
+}
+
+.input-container:focus-within {
+  border-color: #4facfe;
+  box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+  background: white;
+}
+
+/* Botão de adicionar arquivo (+) */
+.add-file-button {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.add-file-button:hover {
+  background: rgba(100, 116, 139, 0.1);
+  color: #4facfe;
+  transform: scale(1.05);
+}
+
+.add-file-button:focus {
+  outline: 2px solid #4facfe;
+  outline-offset: 2px;
+}
+
+/* Input de mensagem */
+.message-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-family: inherit;
+  resize: none;
+  min-height: 24px;
+  max-height: 120px;
+  line-height: 1.5;
+  outline: none;
+  color: #1e293b;
+}
+
+.message-input::placeholder {
+  color: #94a3b8;
+  font-style: normal;
+}
+
+.message-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Botão de enviar */
+.send-button {
+  background: #343434;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #1e293b;
+  transform: scale(1.05);
+}
+
+.send-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.send-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  background: #94a3b8;
+}
+
+.send-button:focus {
+  outline: 2px solid #4facfe;
+  outline-offset: 2px;
+}
+
+/* Input de arquivo oculto */
+.file-input {
+  display: none;
+}
+
+/* Indicador de arquivo selecionado */
+.file-indicator {
+  position: absolute;
+  bottom: 100%;
+  left: 12px;
+  background: #4facfe;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: slideUp 0.3s ease;
+}
+
+.file-indicator .remove-file {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.file-indicator .remove-file:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================
+   RESPONSIVIDADE MOBILE - CORRIGIDA
+   ========================================== */
+
+@media (max-width: 768px) {
+  .input-wrapper {
+    /* CORREÇÃO: Position fixed para ficar sempre visível */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 15px;
+    background: white;
+    z-index: 1000;
+    border-top: 1px solid #e2e8f0;
+    /* CORREÇÃO: Adiciona sombra para destacar */
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .input-area {
+    max-width: none;
+    width: 100%;
+  }
+
+  .input-container {
+    padding: 6px 10px;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .message-input {
+    padding: 6px 10px;
+    font-size: 16px; /* Evita zoom no iOS */
+    /* CORREÇÃO: Garante altura mínima visível */
+    min-height: 20px;
+  }
+
+  .send-button,
+  .add-file-button {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    /* CORREÇÃO: Garante que sejam sempre visíveis */
+    flex-shrink: 0;
+  }
+
+  .file-indicator {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .input-wrapper {
+    /* CORREÇÃO: Mantém fixed e adiciona padding para teclado */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px;
+    background: white;
+    z-index: 1000;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    /* CORREÇÃO: Padding bottom extra para quando o teclado aparece */
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+  }
+
+  .input-container {
+    padding: 4px 8px;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .message-input {
+    padding: 4px 8px;
+    min-height: 20px;
+    font-size: 16px; /* Evita zoom */
+  }
+
+  .send-button,
+  .add-file-button {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+}
+
+/* ==========================================
+   CORREÇÃO PARA TECLADO DO CELULAR
+   ========================================== */
+
+/* Quando o teclado aparece, o input deve ficar visível */
+@supports (height: 100dvh) {
+  @media (max-width: 768px) {
+    .input-wrapper {
+      /* CORREÇÃO: Usa viewport dinâmico quando disponível */
+      bottom: env(keyboard-inset-height, 0px);
+    }
+  }
+}
+
+/* Para dispositivos iOS */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 768px) {
+    .input-wrapper {
+      /* CORREÇÃO: Padding extra para iOS */
+      padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+    }
+  }
+}
+
+/* ==========================================
+   CORREÇÃO PARA O CHAT CONTAINER
+   ========================================== */
+
+/* Adiciona padding bottom no chat para não sobrepor o input fixo */
+@media (max-width: 768px) {
+  .messages-area {
+    /* CORREÇÃO: Padding bottom para não ficar atrás do input */
+    padding-bottom: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .messages-area {
+    /* CORREÇÃO: Padding bottom menor para telas pequenas */
+    padding-bottom: 70px;
+  }
+}
+
+/* ==========================================
+   MODO ESCURO - INPUT MOBILE
+   ========================================== */
+
+@media (prefers-color-scheme: dark) {
+  .input-wrapper {
+    background: #1e293b;
+    border-top-color: #475569;
+  }
+
+  .input-container {
+    background: #334155;
+    border-color: #475569;
+  }
+
+  .input-container:focus-within {
+    background: #1e293b;
+    border-color: #4facfe;
+  }
+
+  .message-input {
+    color: #e2e8f0;
+  }
+  
+  .message-input::placeholder {
+    color: #94a3b8;
+  }
+
+  .add-file-button {
+    color: #94a3b8;
+  }
+
+  .add-file-button:hover {
+    background: rgba(148, 163, 184, 0.1);
+    color: #4facfe;
+  }
+}
+
+/* ==========================================
+   ANIMAÇÕES
+   ========================================== */
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================
+   IMPRESSÃO - INPUT
+   ========================================== */
+
+@media print {
+  .input-wrapper,
+  .input-area {
+    display: none;
+  }
+}
