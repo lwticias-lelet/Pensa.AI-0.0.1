@@ -1,11 +1,12 @@
-﻿fastapi
+﻿
+fastapi
 uvicorn[standard]
 llama-index
-llama-index-llms-openai
-llama-index-embeddings-openai
+llama-index-llms-groq
+llama-index-embeddings-huggingface
 aiofiles
 python-multipart
 python-dotenv
 PyPDF2
-openai
-groq 
+groq
+pydantic
